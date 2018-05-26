@@ -7,10 +7,11 @@ var cookieed = (function(){
       console.log("clive");
     } 
   }
+  
 
   return {
     init : function (){
-      
+
     },
     setCookieKey: function(){
       _.clive();
