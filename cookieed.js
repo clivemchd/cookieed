@@ -10,11 +10,8 @@ var cookieed = (function(){
   
 
   return {
-    init : function (){
-
-    },
     setCookieKey: function(){
-      _.clive();
+      
     }
   };
 })();
