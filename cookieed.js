@@ -3,6 +3,8 @@
 var CookieBanner = (function(){
 
   /* Private Variables */
+  var btnActions        = ['accept', 'reject', 'settings'];
+  var configTypeValues  = ['banner', 'tab'];
   var _defaultConfig = {
     "content"      : [{
       "type"        : "banner",
@@ -38,14 +40,12 @@ var CookieBanner = (function(){
       "id"          : "modal-button-accept",
       "class"       : "csm-button-accept",
       "enable"      : false
-    },],
+    }],
     "cookie_name"  : {
       "name"    : "CookieBannerConsent",
       "expires" : 1,
     },
-  };
-  var btnActions        = ['accept', 'reject', 'settings'];
-  var configTypeValues  = ['banner', 'tab'];  
+  };  
   var mergedConfig      = JSON.parse(JSON.stringify(_defaultConfig));
   var userConsent       = {};
   
@@ -165,11 +165,16 @@ var CookieBanner = (function(){
     },
     updateSettingsConfig  :function(resOptions){
       var newResOptions = { "new_object" : resOptions, "merged_config" : mergedConfig };
-      if(newResOptions.new_object.content && newResOptions.new_object.button && newResOptions.new_object.cookie_name && _util.validate.settingsConfig(newResOptions.new_object)){
-        this.updateCookieName(newResOptions.new_object.cookie_name);
-        this.updateButtonType(newResOptions.new_object.button);
-        this.updateContentType(newResOptions.new_object.content); 
+      if(newResOptions.new_object.content && _util.validate.contentConfig(newResOptions.new_object)){
+        this.updateContentType(newResOptions.new_object.content);         
       }
+      if(newResOptions.new_object.button && _util.validate.buttonConfig(newResOptions.new_object)){
+        this.updateButtonType(newResOptions.new_object.button);
+      }
+      if(newResOptions.new_object.cookie_name && _util.validate.cookieConfig(newResOptions.new_object)){
+        this.updateCookieName(newResOptions.new_object.cookie_name);        
+      }
+      console.log("mergedConfig", mergedConfig);
     }
   };
 
