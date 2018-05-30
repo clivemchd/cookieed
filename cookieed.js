@@ -59,7 +59,7 @@ var CookieBanner = (function(){
     },
     insert  : {
       /// B ///
-      btnInConfig       :function(data){
+      btnInConfig             :function(data){
         mergedConfig.button.map(function(btnObject, index){
           if(btnObject.action === data.action && btnObject.type === data.type){
             mergedConfig.button.splice(index, 1, Object.assign(btnObject, data));
@@ -67,10 +67,13 @@ var CookieBanner = (function(){
         });
       },
       /// C ///
-      contentInConfig   :function(data){
-        console.log("data", data);
+      contentInConfig         :function(data){
+        mergedConfig.content.map(function(contentObject, index){
+          if(contentObject.id === data.id && contentObject.type === data.type){
+            mergedConfig.content.splice(index, 1, Object.assign(contentObject, data));
+          };
+        });
       }
-      
     },
     // V //
     validate : {
@@ -92,7 +95,7 @@ var CookieBanner = (function(){
         return configTypeValues.indexOf(resOptions.type) > -1 ? true : false;
       },
       contentByType               :function(resOptions){
-        return resOptions.type === 'banner' ? resOptions.id && resOptions.template ? true : false : resOptions.id && resOptions.template && resOptions.position && resOptions.title && resOptions.cookies && this.contentByCookies(resOptions) && this.forEachContentCookiesConfig(resOptions) ? true : false;
+        return resOptions.type === 'banner' ? resOptions.id && resOptions.template ? true : false : resOptions.id && resOptions.template && resOptions.position && resOptions.title && resOptions.enable && resOptions.cookies && this.contentByCookies(resOptions) && this.forContentCookiesConfig(resOptions) ? true : false;
       },
       contentByCookies            :function(resOptions){
         return resOptions && !_util.isArrayEmpty(resOptions.cookies) ? true : false;
@@ -105,13 +108,26 @@ var CookieBanner = (function(){
         return Object.keys(resOptions).length && resOptions.type && this.configTypeValue(resOptions) && this.contentByType(resOptions) ? true : false;
       },
       forEachContentCookiesConfig :function(resOptions){
+        return Object.keys(resOptions).length && resOptions.key && resOptions.name ? true : false;        
+      },
+      forContentConfig            :function(resOptions){
+        return resOptions.content.every(function(contentObject){
+          return _util.validate.forEachContentConfig(contentObject);
+        });
+      },
+      forButtonConfig             :function(resOptions){
+        return resOptions.button.every(function(buttonObject){
+          return _util.validate.forEachBtnConfig(buttonObject);
+        });
+      },
+      forContentCookiesConfig     :function(resOptions){
         return resOptions.cookies.every(function(cookieObject){
-          return Object.keys(cookieObject).length && cookieObject.key && cookieObject.name ? true : false;
+          return _util.validate.forEachContentCookiesConfig(cookieObject);
         });
       },
       /// S ///
       settingsConfig              :function(resOptions){
-        return this.buttonConfig(resOptions) && this.contentConfig(resOptions) && this.cookieConfig(resOptions) ? true : false;
+        return this.buttonConfig(resOptions) && this.contentConfig(resOptions) && this.cookieConfig(resOptions) && this.forContentConfig(resOptions) && this.forButtonConfig(resOptions) ? true : false;
       }
     }
   };
@@ -121,22 +137,40 @@ var CookieBanner = (function(){
     /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
     
     // U //
-    updateCookieName  :function(resOptions){
+    updateCookieName      :function(resOptions){
       var newResOptions = { "cookie_name" : resOptions };
       resOptions && Object.keys(resOptions).length && _util.validate.cookieConfig(newResOptions) && Object.assign(mergedConfig, newResOptions);
     },
-    updateButtonType  :function(resOptions){
+    updateEachButtonType      :function(resOptions){
       var newResOptions = { "new_button_object" : resOptions, "merged_config" : mergedConfig };
       if(newResOptions.new_button_object && _util.validate.forEachBtnConfig(newResOptions.new_button_object)){
         _util.insert.btnInConfig(resOptions);
       };
     },
-    updateContentType :function(resOptions){
+    updateEachContentType     :function(resOptions){
       var newResOptions = { "new_content_object" : resOptions, "merged_config" : mergedConfig };
       if(newResOptions.new_content_object && _util.validate.forEachContentConfig(newResOptions.new_content_object)){
         _util.insert.contentInConfig(resOptions);
       };
-    } 
+    },
+    updateButtonType      :function(resOptions){
+      resOptions.map(function(buttonObject){
+        _proxy.updateEachButtonType(buttonObject);
+      });
+    },
+    updateContentType     :function(resOptions){
+      resOptions.map(function(contentObject){
+        _proxy.updateEachContentType(contentObject);
+      });
+    },
+    updateSettingsConfig  :function(resOptions){
+      var newResOptions = { "new_object" : resOptions, "merged_config" : mergedConfig };
+      if(newResOptions.new_object.content && newResOptions.new_object.button && newResOptions.new_object.cookie_name && _util.validate.settingsConfig(newResOptions.new_object)){
+        this.updateCookieName(newResOptions.new_object.cookie_name);
+        this.updateButtonType(newResOptions.new_object.button);
+        this.updateContentType(newResOptions.new_object.content); 
+      }
+    }
   };
 
   /* Private Functions */
@@ -162,10 +196,7 @@ var CookieBanner = (function(){
    */
   function _init(settings, callback){
     console.log("Initializing CookieBanner ...");
-    // _util.validate.settingsConfig(settings);
-    // _build.bannerLayout();
-    
-    // return callback(userConsent); 
+
     console.log("Initialized CookieBanner");
   };
 
@@ -176,17 +207,17 @@ var CookieBanner = (function(){
     
     // I //
     init             :function(settings, callback){
-      _init(settings, callback);
+      _proxy.updateSettingsConfig(settings, callback);
     },
     // S //
     setCookieName     :function(reqOptions){
       _proxy.updateCookieName(reqOptions);          
     },
     setButton         :function(reqOptions){
-      _proxy.updateButtonType(reqOptions);
+      _proxy.updateEachButtonType(reqOptions);
     },
     setContent        :function(reqOptions){
-      _proxy.updateContentType(reqOptions);
+      _proxy.updateEachContentType(reqOptions);
     },
     setImage          :function(){
       //Coming Soon
