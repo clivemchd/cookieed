@@ -55,8 +55,23 @@ var CookieBanner = (function(){
   var _util = {
     /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
     
+    // G //
+    getCookieValueByName :function(name){
+      var cookieName = name + "=";
+      var cookieArray = decodeURIComponent(document.cookie).split(';');
+      for(var i = 0; i <cookieArray.length; i++) {
+        var cookieKey = cookieArray[i];
+        while (cookieKey.charAt(0) == ' ') {
+          cookieKey = cookieKey.substring(1);
+        }
+        if (cookieKey.indexOf(cookieName) == 0) {
+          return cookieKey.split('=')[1];
+        }
+      }
+      return "";
+    },
     // I //
-    isArrayEmpty : function(data){
+    isArrayEmpty  :function(data){
       return data && Array.isArray(data) && data.length ? false : true
     },
     insert  : {
@@ -76,6 +91,14 @@ var CookieBanner = (function(){
           };
         });
       }
+    },
+    // T // 
+    toggleBanner : function(mergedConfig, btnAction){
+      if(_util.validate.toHideBanner(mergedConfig.cookie_name.name) || btnAction === 'reject'){
+        document.getElementById("cookie-banner-container").style.display = "none";
+      }else{
+        document.getElementById("cookie-banner-container").style.display = "block";        
+      };
     },
     // V //
     validate : {
@@ -127,11 +150,19 @@ var CookieBanner = (function(){
           return _util.validate.forEachContentCookiesConfig(cookieObject);
         });
       },
+      /// I ///
+      ifCookieSet                 :function(resOptions){
+        return _util.getCookieValueByName(resOptions) ? true :false;
+      },
       /// S ///
       settingsConfig              :function(resOptions){
         return this.buttonConfig(resOptions) && this.contentConfig(resOptions) && this.cookieConfig(resOptions) && this.forContentConfig(resOptions) && this.forButtonConfig(resOptions) ? true : false;
+      },
+      /// T ///
+      toHideBanner :function(cookieName){
+        return _util.getCookieValueByName(cookieName) ? JSON.parse(_util.getCookieValueByName(cookieName)).action === 'accept' ? true : false : false;
       }
-    }
+    },
   };
 
   /* exposed proxy functions */
@@ -270,10 +301,12 @@ var CookieBanner = (function(){
     saveConsent :function(eventSettings){            
       if(eventSettings.type && eventSettings.type === 'banner' && eventSettings.action && (eventSettings.action === 'accept' || eventSettings.action === 'reject') && eventSettings.user_consent){
         var cookieValue     = JSON.stringify({ "action" : eventSettings.action, "user_consent": eventSettings.user_consent});
-        var date            = new Date(), daysToSetCookie = mergedConfig.cookie_name.expires;
+        var date            = new Date()
+        var daysToSetCookie = mergedConfig.cookie_name.expires;
         date.setTime(date.getTime() + (daysToSetCookie * 24 * 60 * 60 * 1000));
         document.cookie = mergedConfig.cookie_name.name + "=" + cookieValue + "; expires=" + date.toGMTString();
       }
+      _util.toggleBanner(mergedConfig, eventSettings.action);
     }
   }
 
@@ -283,7 +316,8 @@ var CookieBanner = (function(){
   function _init(callback){
     if(mergedConfig.content && mergedConfig.button && mergedConfig.cookie_name && _util.validate.settingsConfig(mergedConfig)){
       console.log("Initializing CookieBanner ...");
-      _build.bannerLayout(mergedConfig);  
+      _build.bannerLayout(mergedConfig);
+      _util.toggleBanner(mergedConfig);
       console.log("Initialized CookieBanner");                
     };
   };
