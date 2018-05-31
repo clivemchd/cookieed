@@ -1,5 +1,10 @@
 'use strict';
 
+/* Exposed Variable */
+var userConsent  = {
+  status : true
+};
+
 var CookieBanner = (function(){
 
   /* Private Variables */
@@ -11,7 +16,26 @@ var CookieBanner = (function(){
       "id"          : "banner-text-content",
       "class"       : "cbc-text-content",
       "template"    : "<p>We use cookies to improve your experience and analyze site usage. Read <a href='#' target='_blank'>Cookie Policy<a>.<p>"
-    }],
+    },{   
+    "type"        : "tab",
+    "id"          : "modal-tab-privacy", //unique identity
+    "class"       : "",
+    "position"    : 1, // only tab support
+    "checkbox"    : true, // only tab support 
+    "title"       : "Strict Cookies", // only tab support
+    "template"    : "<p>These cookies are necessary for the website to function and cannot be switched off in our systems. They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in or filling in forms. Without these cookies, some parts of our site or the service being requested will be impossible to provide.</p>",
+    "enable"     : true, //only tab support
+    "cookies"     : [{
+      "key"     : "sad",
+      "name"    : "asfa"
+    },{
+      "key"     : "dum",
+      "name"    : "rimda"
+    },{
+      "key"     : "kum",
+      "name"    : "safvfvfsvsd"
+    }] // only tab support
+  }],
     "button"      : [{
       "type"        : "banner",
       "title"       : "Accept All Cookies",
@@ -47,9 +71,9 @@ var CookieBanner = (function(){
     },
   };  
   var mergedConfig      = JSON.parse(JSON.stringify(_defaultConfig));
-  var userConsent       = {
-    status : true
-  };
+
+  /* User provided Callback */
+  var _userCallback;
   
   /* Private utility Functions */
   var _util = {
@@ -221,7 +245,7 @@ var CookieBanner = (function(){
     /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
 
     // B //
-    bannerLayout :function(config){
+    bannerLayout        :function(config){
       _append.element({
         "element_tag" : "div",
         "element_id"  : "cookie-banner-container",
@@ -232,7 +256,7 @@ var CookieBanner = (function(){
       this.bannerContent(config);
       this.bannerButtons(config);
     },
-    bannerTextWrapper :function(config){
+    bannerTextWrapper   :function(config){
       _append.element({
         "element_tag"   : "div",
         "element_id"    : "banner-text-wrapper",
@@ -248,7 +272,7 @@ var CookieBanner = (function(){
         "parent_id"     : "cookie-banner-container"
       });
     },
-    bannerContent :function(config){
+    bannerContent       :function(config){
       config.content.map(function(contentObj, index){
         contentObj.type === "banner" && _append.element({
           "element_tag"    : "div",
@@ -259,7 +283,7 @@ var CookieBanner = (function(){
         });
       });
     },
-    bannerButtons :function(config){
+    bannerButtons       :function(config){
       config.button.map(function(btnObj, index){
         var clickSettings = JSON.stringify({ 
           "type"          : btnObj.type, 
@@ -276,7 +300,84 @@ var CookieBanner = (function(){
           "template"      : btnObj.title
         });
       });
-    }
+    },
+    // M //
+    modalLayout         :function(config){
+      _append.element({
+        "element_tag"   : "div",
+        "element_id"    : "modal-settings-wrapper",
+        "element_class" : "cookie-settings-modal",
+        "parent_tag"    : "body"
+      });
+      this.modalHeader(config);
+      this.modalBody(config);
+      this.modalFooter(config);
+      this.modalHeaderText(config);
+      this.modalHeaderButton(config);
+      this.modalFooterButtons(config);
+      _clickAction.closeModal({ "id" : "modal-settings-wrapper", "action" : "close" });
+    },
+    modalHeader         :function(config){
+      _append.element({
+        "element_tag"   : "div",
+        "element_id"    : "modal-header",
+        "element_class" : "csm-header",
+        "parent_id"     : "modal-settings-wrapper"
+      });
+    },
+    modalBody           :function(config){
+      _append.element({
+        "element_tag"   : "div",
+        "element_id"    : "modal-body",
+        "element_class" : "csm-body",
+        "parent_id"     : "modal-settings-wrapper"
+      });
+    },
+    modalFooter         :function(config){
+      _append.element({
+        "element_tag"   : "div",
+        "element_id"    : "modal-footer",
+        "element_class" : "csm-footer",
+        "parent_id"     : "modal-settings-wrapper"
+      });
+    },
+    modalHeaderText     :function(config){
+      _append.element({
+        "element_tag"   : "div",
+        "element_id"    : "modal-header-text",
+        "parent_id"     : "modal-header",
+        "element_class" : "csm-header-text",
+        "template"      : "<p>Privacy Preference Centre</p>",
+      });
+    },
+    modalHeaderButton   :function(config){
+      _append.element({
+        "element_tag"   : "button",
+        "element_id"    : "modal-button-close",
+        "element_class" : "csm-button-close",
+        "element_click" : 'CookieBanner.DOMclickAction.buttons({ "id" : "modal-settings-wrapper", "action" : "close" })', //Pass an Array in a later release
+        "parent_id"     : "modal-header",
+        "template"      : "X"
+      });
+    },
+    modalFooterButtons  :function(config){
+      config.button.map(function(btnObj, index){
+        var clickSettings = JSON.stringify({ 
+          "type"          : btnObj.type, 
+          "action"        : btnObj.action,
+          "id"            : btnObj.id,
+          "user_consent"  : userConsent
+        });
+        btnObj.type === "tab" && btnObj.enable && _append.element({
+          "element_tag"   : "button",
+          "element_id"    : btnObj.id,
+          "element_class" : btnObj.class,
+          "element_click" : 'CookieBanner.DOMclickAction.buttons('+ clickSettings +')', //Pass an Array in a later release
+          "parent_id"     : "modal-footer",
+          "template"      : btnObj.title
+        });
+      });
+    },
   };
   var _append = {
     /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
@@ -297,16 +398,38 @@ var CookieBanner = (function(){
   var _clickAction = {
     /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
 
+    // C //
+    closeModal  :function(eventSettings){
+      if(eventSettings && eventSettings.id){
+        document.getElementById(eventSettings.id).style.display = "none";    
+      }
+    },
+    // O //
+    openModal   :function(eventSettings){
+      if(eventSettings && eventSettings.id){
+        document.getElementById(eventSettings.id).style.display = "block";
+      }
+    },
     // S //
     saveConsent :function(eventSettings){            
-      if(eventSettings.type && eventSettings.type === 'banner' && eventSettings.action && (eventSettings.action === 'accept' || eventSettings.action === 'reject') && eventSettings.user_consent){
+      if(eventSettings && eventSettings.type && (eventSettings.type === 'banner' || eventSettings.type === 'tab') && eventSettings.action && (eventSettings.action === 'accept' || eventSettings.action === 'reject') && eventSettings.user_consent){
         var cookieValue     = JSON.stringify({ "action" : eventSettings.action, "user_consent": eventSettings.user_consent});
-        var date            = new Date()
+        var date            = new Date();
         var daysToSetCookie = mergedConfig.cookie_name.expires;
         date.setTime(date.getTime() + (daysToSetCookie * 24 * 60 * 60 * 1000));
         document.cookie = mergedConfig.cookie_name.name + "=" + cookieValue + "; expires=" + date.toGMTString();
+        if(eventSettings.type === 'tab' && eventSettings.action === 'accept'){
+          this.closeModal({ "id" : "modal-settings-wrapper", "action" : "close" });          
+        }
+        _userCallback(cookieValue);
       }
-      _util.toggleBanner(mergedConfig, eventSettings.action);
+      if(eventSettings && eventSettings.type && eventSettings.type === 'banner' && eventSettings.action && eventSettings.action === 'settings' && eventSettings.user_consent){
+        this.openModal({ "id" : "modal-settings-wrapper", "action" : eventSettings.action });
+      }
+      if(eventSettings && eventSettings.id && eventSettings.action === "close"){
+        this.closeModal({ "id" : "modal-settings-wrapper", "action" : "close" });
+      }
+      _util.toggleBanner(mergedConfig, eventSettings.action);      
     }
   }
 
@@ -317,9 +440,11 @@ var CookieBanner = (function(){
     if(mergedConfig.content && mergedConfig.button && mergedConfig.cookie_name && _util.validate.settingsConfig(mergedConfig)){
       console.log("Initializing CookieBanner ...");
       _build.bannerLayout(mergedConfig);
+      _build.modalLayout(mergedConfig);
       _util.toggleBanner(mergedConfig);
-      console.log("Initialized CookieBanner");                
+      console.log("Initialized CookieBanner");      
     };
+    _userCallback = callback;
   };
 
   /* Set of functions exposed to the users */
