@@ -10,7 +10,7 @@ var CookieBanner = (function(){
       "type"        : "banner",
       "id"          : "banner-text-content",
       "class"       : "cbc-text-content",
-      "template"    : "<p>Built.io uses cookies to improve your experience and analyze site usage. Read <a href='#' target='_blank'>Cookie Policy<a>.<p>"
+      "template"    : "<p>We use cookies to improve your experience and analyze site usage. Read <a href='#' target='_blank'>Cookie Policy<a>.<p>"
     }],
     "button"      : [{
       "type"        : "banner",
@@ -47,7 +47,9 @@ var CookieBanner = (function(){
     },
   };  
   var mergedConfig      = JSON.parse(JSON.stringify(_defaultConfig));
-  var userConsent       = {};
+  var userConsent       = {
+    status : true
+  };
   
   /* Private utility Functions */
   var _util = {
@@ -89,7 +91,7 @@ var CookieBanner = (function(){
         return resOptions && !_util.isArrayEmpty(resOptions.content) ? true : false;
       },
       cookieConfig                :function(resOptions){
-        return resOptions && resOptions.cookie_name && resOptions.cookie_name.name ? true : false;
+        return resOptions && resOptions.cookie_name && resOptions.cookie_name.name && resOptions.cookie_name.expires ? true : false;
       },
       configTypeValue             :function(resOptions){
         return configTypeValues.indexOf(resOptions.type) > -1 ? true : false;
@@ -136,8 +138,14 @@ var CookieBanner = (function(){
   var _proxy = {
     /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
     
+    // D //
+    DOMevent              :{
+      buttons :function(btnSettings){
+        _clickAction.saveConsent(btnSettings);
+      }
+    },
     // U //
-    updateCookieName      :function(resOptions){
+    updateCookieName          :function(resOptions){
       var newResOptions = { "cookie_name" : resOptions };
       resOptions && Object.keys(resOptions).length && _util.validate.cookieConfig(newResOptions) && Object.assign(mergedConfig, newResOptions);
     },
@@ -153,17 +161,17 @@ var CookieBanner = (function(){
         _util.insert.contentInConfig(resOptions);
       };
     },
-    updateButtonType      :function(resOptions){
+    updateButtonType          :function(resOptions){
       resOptions.map(function(buttonObject){
         _proxy.updateEachButtonType(buttonObject);
       });
     },
-    updateContentType     :function(resOptions){
+    updateContentType         :function(resOptions){
       resOptions.map(function(contentObject){
         _proxy.updateEachContentType(contentObject);
       });
     },
-    updateSettingsConfig  :function(resOptions){
+    updateSettingsConfig      :function(resOptions){
       var newResOptions = { "new_object" : resOptions, "merged_config" : mergedConfig };
       if(newResOptions.new_object.content && _util.validate.contentConfig(newResOptions.new_object)){
         this.updateContentType(newResOptions.new_object.content);         
@@ -174,7 +182,6 @@ var CookieBanner = (function(){
       if(newResOptions.new_object.cookie_name && _util.validate.cookieConfig(newResOptions.new_object)){
         this.updateCookieName(newResOptions.new_object.cookie_name);        
       }
-      console.log("mergedConfig", mergedConfig);
     }
   };
 
@@ -183,51 +190,131 @@ var CookieBanner = (function(){
     /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
 
     // B //
-    bannerLayout :function(){
-      
+    bannerLayout :function(config){
+      _append.element({
+        "element_tag" : "div",
+        "element_id"  : "cookie-banner-container",
+        "parent_tag"  : "body"
+      });
+      this.bannerTextWrapper(config);
+      this.bannerButtonWrapper(config);
+      this.bannerContent(config);
+      this.bannerButtons(config);
+    },
+    bannerTextWrapper :function(config){
+      _append.element({
+        "element_tag"   : "div",
+        "element_id"    : "banner-text-wrapper",
+        "element_class" : "cbc-text-wrapper",
+        "parent_id"     : "cookie-banner-container"
+      });
+    },
+    bannerButtonWrapper :function(config){
+      _append.element({
+        "element_tag"   : "div",
+        "element_id"    : "banner-button-wrapper",
+        "element_class" : "cbc-button-wrapper",
+        "parent_id"     : "cookie-banner-container"
+      });
+    },
+    bannerContent :function(config){
+      config.content.map(function(contentObj, index){
+        contentObj.type === "banner" && _append.element({
+          "element_tag"    : "div",
+          "element_id"     : contentObj.id,
+          "element_class"  : contentObj.class,
+          "parent_id"      : "banner-text-wrapper",
+          "template"       : contentObj.template
+        });
+      });
+    },
+    bannerButtons :function(config){
+      config.button.map(function(btnObj, index){
+        var clickSettings = JSON.stringify({ 
+          "type"          : btnObj.type, 
+          "action"        : btnObj.action, 
+          "id"            : btnObj.id,
+          "user_consent"  : userConsent
+        });
+        btnObj.type === "banner" && btnObj.enable && _append.element({
+          "element_tag"   : "button",
+          "element_id"    : btnObj.id,
+          "element_class" : btnObj.class,
+          "element_click" : 'CookieBanner.DOMclickAction.buttons('+ clickSettings +')', //Pass an Array in a later release
+          "parent_id"     : "banner-button-wrapper",
+          "template"      : btnObj.title
+        });
+      });
     }
   };
   var _append = {
     /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
 
     // E //
-    element : function(resOptions){
-      
+    element :function(resOptions){
+      if(resOptions && Object.keys(resOptions).length && (resOptions.parent_tag || resOptions.parent_id) && resOptions.element_id && resOptions.element_tag){
+        var parent = resOptions.parent_tag ? document.getElementsByTagName(resOptions.parent_tag)["0"] && document.getElementsByTagName(resOptions.parent_tag)["0"] : document.getElementById(resOptions.parent_id);
+        var newElement = document.createElement(resOptions.element_tag);
+        newElement.setAttribute('id', resOptions.element_id);
+        resOptions.element_class && newElement.setAttribute('class', resOptions.element_class);
+        resOptions.element_click && newElement.setAttribute('onclick', resOptions.element_click);       
+        newElement.innerHTML = resOptions.template ? resOptions.template : "";
+        parent && parent.appendChild(newElement);
+      }
     }
   };
+  var _clickAction = {
+    /* Dear Maintainer, please arrange functions in alphabetical order makes it easier to find. */
+
+    // S //
+    saveConsent :function(eventSettings){            
+      if(eventSettings.type && eventSettings.type === 'banner' && eventSettings.action && (eventSettings.action === 'accept' || eventSettings.action === 'reject') && eventSettings.user_consent){
+        var cookieValue     = JSON.stringify({ "action" : eventSettings.action, "user_consent": eventSettings.user_consent});
+        var date            = new Date(), daysToSetCookie = mergedConfig.cookie_name.expires;
+        date.setTime(date.getTime() + (daysToSetCookie * 24 * 60 * 60 * 1000));
+        document.cookie = mergedConfig.cookie_name.name + "=" + cookieValue + "; expires=" + date.toGMTString();
+      }
+    }
+  }
 
   /**
    * Inititalize the DOM on first load
    */
-  function _init(settings, callback){
-    console.log("Initializing CookieBanner ...");
-
-    console.log("Initialized CookieBanner");
+  function _init(callback){
+    if(mergedConfig.content && mergedConfig.button && mergedConfig.cookie_name && _util.validate.settingsConfig(mergedConfig)){
+      console.log("Initializing CookieBanner ...");
+      _build.bannerLayout(mergedConfig);  
+      console.log("Initialized CookieBanner");                
+    };
   };
 
-  /**
-   * Set of functions exposed to the users
-   */
+  /* Set of functions exposed to the users */
   return {
-    
+
+    DOMclickAction   : {
+      // B //
+      buttons :function(btnSettings){
+        _proxy.DOMevent.buttons(btnSettings);
+      }
+    },
     // I //
     init             :function(settings, callback){
-      _proxy.updateSettingsConfig(settings, callback);
+      _proxy.updateSettingsConfig(settings);
+      _init(callback);
     },
     // S //
-    setCookieName     :function(reqOptions){
+    setCookieName    :function(reqOptions){
       _proxy.updateCookieName(reqOptions);          
     },
-    setButton         :function(reqOptions){
+    setButton        :function(reqOptions){
       _proxy.updateEachButtonType(reqOptions);
     },
-    setContent        :function(reqOptions){
+    setContent       :function(reqOptions){
       _proxy.updateEachContentType(reqOptions);
     },
-    setImage          :function(){
+    setImage         :function(){
       //Coming Soon
     }
   };
-
 
 })();
