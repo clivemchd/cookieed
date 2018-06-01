@@ -602,14 +602,13 @@ var CookieBanner = (function(){
    */
   function _init(){
     if(mergedConfig.content && mergedConfig.button && mergedConfig.cookie_name && _util.validate.settingsConfig(mergedConfig)){
-      console.log("Initializing CookieBanner ...");
       //Add cookieValue globally if it exists.
       cookieValue = _util.validate.ifCookieNameSet(mergedConfig.cookie_name.name) ? JSON.parse(_util.getCookieValueByName(mergedConfig.cookie_name.name)) : undefined;
       // Build DOM
       _build.bannerLayout(mergedConfig);
       _build.modalLayout(mergedConfig);
       _util.toggleBanner(mergedConfig);
-      console.log("Initialized CookieBanner");
+      console.log("Initialized Cookie-Banner");
     };
   };
 
