@@ -2,3 +2,8 @@
   border: 1px solid #ffd1d1;
   padding: 1%;
 }
+
+#modal-body, #modal-header, #modal-footer{
+  border: 1px solid #ffd1d1;
+  padding: 1%;
+}
